@@ -2,8 +2,6 @@ import numba as n
 import time
 import numpy as np
 
-import matplotlib.pyplot as plt
-
 
 x = np.linspace(0, 10, 20)
 dx = x[1] - x[0]
@@ -48,37 +46,5 @@ def diff2(y):
       
     return yd
     
-"""
-start = time.time()
-for i in range(int(0.5e6)):
-    np.gradient(np.gradient(y, dx, edge_order=2), dx, edge_order=2)
-print(time.time() - start)
-
-diff2(y*5)
-
-start = time.time()
-for i in range(int(0.5e6)):
-    diff2(y)
-print(time.time() - start)
-
-c = 0
-
-start = time.perf_counter()
-for i in range(int(1e6)):
-    c += 1
-print(time.perf_counter() - start)
-"""
-
-plt.figure()
-#plt.plot(x, np.gradient(y, dx, edge_order=2), label='np.gradient')
-plt.plot(x, -np.sin(x), label='exact')
-plt.plot(x, diff2(y), label='numba diff2')
-plt.legend()
-plt.show()
-
-
-
-
-
 
 
