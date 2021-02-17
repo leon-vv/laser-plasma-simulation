@@ -1,59 +1,49 @@
+import numba as n
+import time
+import numpy as np
 
-def combined_video(st, peak_indices, save_as=None):
-    plt.rcParams.update({'figure.autolayout': True})
-    plt.rcParams["animation.html"] = "jshtml"
-    
-    pressure = [s[2] for s in st]
-    density = [s[0] for s in st]
-    temps = [temperature(s) for s in st]
-    vel = [s[1] / s[0] for s in st]
-     
-    
-    fig, axs = plt.subplots(4, sharex=True, figsize=(12, 10))
-    #fig.tight_layout()
-    
-    t = fig.text(0.17, 0.92, '0.00 us', fontsize=25)
-        
-    l1, = axs[0].plot(r_mm, pressure[0]/1e5, label="Pressure", color="red")
-    axs[0].set_ylabel("Pressure (bar)", color="red")
-    axs[0].set_ylim(0, 10)
-    
-    vl = axs[0].axvline(r_mm[peak_indices[0]], ls='-', color='y')
-     
-    l2, = axs[1].plot(r_mm, density[0], label="Density", color="blue")
-    axs[1].set_ylim(np.min(density), np.max(density) * 1.1)
-    axs[1].set_ylabel("Density (kg/m^3)", color="blue")
-    axs[1].set_xlabel("Distance (mm)")
-    axs[1].legend(fontsize=20)
-     
-    l3, = axs[2].plot(r_mm, temps[0], label="Temperature", color="black")
-    axs[2].set_ylim(0, np.max(temps) * 1.1)
-    axs[2].set_ylabel("Temperature (K)")
+import simulate
 
-    l4, = axs[3].plot(r_mm, vel[0])
-    axs[3].set_ylabel('Velocity (m/s)')
-    axs[3].set_ylim(np.min(vel) * 1.1, np.max(vel) * 1.1)
+dx = simulate.dr
+
+@n.stencil(cval=0.0)
+def diff_stencil(y):
+    #return 1/dx * (-1/2*y[-1] +0*y[0] + 1/2*y[1])
+    return 1/dx * (-1/60*y[-3] + 3/20*y[-2] -3/4*y[-1] + 3/4*y[1] - 3/20*y[2] + 1/60*y[3])
+
+
+@n.njit(cache=True, inline='always')
+def diff(y):
+    yd = diff_stencil(y) 
+
+    yd[0] = 1/dx*(-11/6*y[0] + 3 * y[1] - 3/2*y[2] + 1/3*y[3])
+    yd[1] = 1/dx*(-1/3*y[0] - 1/2*y[1] + 1*y[2] - 1/6*y[3])
+    yd[2] = 1/dx*(1/6*y[0] -1*y[1] + 1/2*y[2]+1/3*y[3])
+    
+    yd[-1] = 1/dx*(-1/3*y[-4] + 3/2*y[-3] - 3*y[-2] + 11/6*y[-1])
+    yd[-2] = 1/dx*(1/6*y[-4] -1*y[-3] + 1/2*y[-2] + 1/3*y[-1])
+    yd[-3] = 1/dx*(-1/3*y[-4] -1/2*y[-3] +1*y[-2] -1/6*y[-1])
+    
+    return yd
+
+@n.stencil(cval=0.0)
+def diff2_stencil(y):
+    #return 1/dx * (-1/2*y[-1] +0*y[0] + 1/2*y[1])
+    return 1/dx**2 * (1/90*y[-3] -3/20*y[-2] + 3/2*y[-1] -49/18*y[0] + 3/2*y[1] -3/20*y[2] + 1/90*y[3])
+
+@n.njit(cache=True, inline='always')
+def diff2(y):
+    yd = diff2_stencil(y) 
+    
+    yd[0] = 1/dx**2 *(2*y[0] -5*y[1] + 4*y[2] -1*y[3])
+    yd[1] = 1/dx**2 *(2*y[0] -2*y[1] + 1*y[2] + 0*y[3])
+    yd[2] = 1/dx**2 *(0*y[0] + 1*y[1] -2*y[2] + 1*y[3])
+    
+    yd[-1] = 1/dx**2*(-1*y[-4] + 4*y[-3] -5*y[-2] + 2*y[-1])
+    yd[-2] = 1/dx**2*(0*y[-4] + 1*y[-3] -2*y[-2] + 1*y[-1])
+    yd[-3] = 1/dx**2*(1*y[-4] -2*y[-3] + 1*y[-2] + 0*y[-1])
       
-    def animate(i):
-        l4.set_data(r_mm, vel[i])
-        l3.set_data(r_mm, temps[i])
-        l2.set_data(r_mm, density[i])
-        l1.set_data(r_mm, pressure[i]/1e5)
-        vl.set_xdata([r_mm[peak_indices[i]], r_mm[peak_indices[i]]])
-        t.set_text("%.2f us" % (t_hist[i] * 1e6))
-
-    #total_frames = len(st)
-    #frames = range(total_frames) if frames == None else np.linspace(0, total_frames-1, frames).astype(np.int)
-    interval = (30000*t_hist[-1]*1e6) / len(st)
-        
-    video_combined = animation.FuncAnimation(fig, animate, interval=5000/len(st), frames=len(st))
+    return yd
     
-    if save_as != None:
-        video_combined.save(save_as)
-    
-    plt.rcParams.update({'figure.autolayout': False})
-    plt.show()
-    
-    return video_combined
 
 
