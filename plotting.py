@@ -5,7 +5,7 @@ from matplotlib import animation
 import analysis as a
 import simulate as s
 
-def combined_video(t_hist, st, peak_indices, save_as=None):
+def combined_video(t_hist, st, peak_indices, symmetry, save_as=None):
     plt.rcParams.update({'figure.autolayout': True})
     plt.rcParams["animation.html"] = "jshtml"
     
@@ -22,11 +22,12 @@ def combined_video(t_hist, st, peak_indices, save_as=None):
     fig, axs = plt.subplots(4, sharex=True, figsize=(12, 10))
     #fig.tight_layout()
     
-    t = fig.text(0.8, 0.92, '0.00 us', fontsize=25)
+    t = fig.text(0.77, 0.95, 'Time: 0.00 us', fontsize=15)
+    e = fig.text(0.77, 0.92, 'Energy change: 0.0 %', fontsize=15)
         
     l1, = axs[0].plot(r_mm, pressure[0]/1e5, label="Pressure", color="red")
     axs[0].set_ylabel("Pressure (bar)", color="red")
-    axs[0].set_ylim(0, 50)
+    axs[0].set_ylim(0, np.max(pressure[0]) / 1e5)
     
     vl = axs[0].axvline(r_mm[peak_indices[0]], ls='-', color='y')
      
@@ -50,12 +51,15 @@ def combined_video(t_hist, st, peak_indices, save_as=None):
         l2.set_data(r_mm, density[i])
         l1.set_data(r_mm, pressure[i]/1e5)
         vl.set_xdata([r_mm[peak_indices[i]], r_mm[peak_indices[i]]])
-        t.set_text("%.2f us" % (t_hist[i] * 1e6))
+        t.set_text("Time: %.2f us" % (t_hist[i] * 1e6))
+        e_change = (1 - a.total_energy_sp(st[i], symmetry)/a.total_energy_sp(st[0], symmetry)) * 100
+        e.set_text('Energy change: %.1f %%' % e_change)
     
     #total_frames = len(st)
     #frames = range(total_frames) if frames == None else np.linspace(0, total_frames-1, frames).astype(np.int)
-    print("Plotting %d frames with %f ms each" % (len(st), 5000/len(st)))  
-    video_combined = animation.FuncAnimation(fig, animate, interval=0, frames=len(st), cache_frame_data=False)
+    dt = (t_hist[-1] - t_hist[0]) / len(t_hist) / 1e-6 * 30000 # 30 Second per us
+    print(dt, len(t_hist))
+    video_combined = animation.FuncAnimation(fig, animate, interval=dt, frames=len(st), cache_frame_data=False)
     
     if save_as != None:
         video_combined.save(save_as)

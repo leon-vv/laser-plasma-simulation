@@ -5,9 +5,15 @@ import simulate as s
 def volumes_sp():
     return  4/3*np.pi*((s.r + 1/2*s.dr)**3 - (s.r-1/2*s.dr)**3)
 
-def total_energy_sp(state):
+def volumes_cy():
+    return  4/3*np.pi*((s.r + 1/2*s.dr)**3 - (s.r-1/2*s.dr)**3)
+
+def total_energy(state, symmetry):
     rho, ru, p = state
-    return np.sum(volumes_sp()*(3/2*(p-101325) + 1/2*rho*(ru/rho)**2))
+    if symmetry == 'spherical':
+        return np.sum(volumes_sp()*(3/2*(p-101325) + 1/2*rho*(ru/rho)**2))
+    elif symmetry == 'cylindrical':
+        return np.sum(volumes_cy()*(3/2*(p-101325) + 1/2*rho*(ru/rho)**2))
 
 def peak_indices(history):
     return np.array([np.where(s[0] == np.max(s[0]))[0][0] for s in history])
