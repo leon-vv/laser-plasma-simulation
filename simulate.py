@@ -17,7 +17,7 @@ rho_unit = m_unit / l_unit**3
 ru_unit = rho_unit * l_unit/t_unit
 p_unit = (m_unit*l_unit/t_unit**2) / l_unit**3
 
-N = int(1000)
+N = int(2000)
 
 gamma = 5/3
 length = 7e-3 / l_unit # 10 mm
@@ -45,8 +45,8 @@ def viscosity(t):
 def get_damped_viscosity(state, diffu):
     d = dr*diffu
     d_neg = np.where(d < 0, d, 0)
-    A = 0.8
-    B = 0.2
+    A = 0.6
+    B = 0.1
     C = 0
     D = 0
     return viscosity(temperature(state)) - A*dr*d_neg + 1/2*B*(dr*d_neg)**2 - 1/6*C*(dr*d_neg)**3 - 1/24*D*(dr*d_neg)**4
@@ -95,7 +95,7 @@ def f_sp_wrapper(state):
     c += 1
     return output
 
-def simulate(start, t_end, symmetry, dt=1.5e-10):
+def simulate(start, t_end, symmetry, dt=0.5e-10):
     print("Starting simulation")
     
     t_hist = [0]
@@ -131,7 +131,7 @@ def simulate(start, t_end, symmetry, dt=1.5e-10):
         
         t_ += dt
         
-        if len(history) < int(100*t_/t_end):
+        if len(history) < int(300*t_/t_end):
             print(t_)
             history.append(np.copy(u))
             t_hist.append(t_)

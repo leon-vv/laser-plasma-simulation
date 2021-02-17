@@ -5,6 +5,8 @@ import analysis as a
 import simulate as s
 import plotting as p
 
+symmetry = 'spherical'
+
 rho = np.ones_like(s.r)*0.164
 ru = np.zeros_like(s.r)
 
@@ -14,11 +16,11 @@ pressure = 169*np.exp(-15.5*np.abs(r_mm)**3.24) * 101325 + 101325
 
 start = np.array([rho, ru, pressure])
 
-t_hist, history = s.simulate(start, 0.5e-6, 'spherical')
+t_hist, history = s.simulate(start, 0.5e-6, symmetry)
 
 peak_indices = a.peak_indices(history)
 
-p.combined_video(t_hist, history, peak_indices)
+p.combined_video(t_hist, history, peak_indices, symmetry, save_as='spherical-less-damping.mp4')
 
 
 
