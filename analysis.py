@@ -6,7 +6,7 @@ def volumes_sp():
     return  4/3*np.pi*((s.r + 1/2*s.dr)**3 - (s.r-1/2*s.dr)**3)
 
 def volumes_cy():
-    return  4/3*np.pi*((s.r + 1/2*s.dr)**3 - (s.r-1/2*s.dr)**3)
+    return np.pi*((s.r + 1/2*s.dr)**2 - (s.r - 1/2*s.dr)**2)
 
 def total_energy(state, symmetry):
     rho, ru, p = state

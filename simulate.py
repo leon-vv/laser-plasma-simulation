@@ -52,7 +52,7 @@ def get_damped_viscosity(state, diffu):
     return viscosity(temperature(state)) - A*dr*d_neg + 1/2*B*(dr*d_neg)**2 - 1/6*C*(dr*d_neg)**3 - 1/24*D*(dr*d_neg)**4
 
 @njit(cache=True)
-def f_cy(state):
+def f_cy(state, output):
     (rho, ru, p) = state
     
     u = ru / rho
@@ -61,11 +61,14 @@ def f_cy(state):
      
     mu_damped = get_damped_viscosity(state, diffu)
     
-    drho = -over_r*diff(r*ru)
-    dru = -over_r*diff(r * ru**2 / rho) - diff(p) + 2*diff(mu_damped * diffu)
-    dp = -over_r*diff(r * p*u) - (gamma - 1) * p*over_r*diff(r*u) + 2*(gamma - 1)*mu_damped*diffu**2
+    output[0] = -over_r*diff(r*ru)
+    output[1] = -over_r*diff(r * ru**2 / rho) - diff(p) + 2*diff(mu_damped * diffu)
+    output[2] = -over_r*diff(r * p*u) - (gamma - 1) * p*over_r*diff(r*u) + 2*(gamma - 1)*mu_damped*diffu**2
 
-    return np.array([drho, dru, dp])
+def f_cy_wrapper(state):
+    output = np.empty_like(state)
+    f_cy(state, output)
+    return output
 
 @njit(cache=True)
 def f_sp(state, output):
@@ -81,19 +84,12 @@ def f_sp(state, output):
     output[1] = -or2 * diff(r2 * ru**2 / rho) - diff(p) + 2*diff(mu_damped * diffu)
     output[2] = -or2 * diff(r2 * p*u) - (gamma - 1) * p*or2*diff(r2*u) + 2*(gamma - 1)*mu_damped*diffu**2
 
-elapsed_core = 0
-c = 0
 
 def f_sp_wrapper(state):
-    global elapsed_core, c
-    
-    start = time.perf_counter()
     output = np.empty_like(state)
-    f_sp(state, output)
-    if c != 0:
-        elapsed_core += time.perf_counter() - start
-    c += 1
+    f_cy(state, output)
     return output
+
 
 def simulate(start, t_end, symmetry, dt=0.5e-10):
     print("Starting simulation")
@@ -108,7 +104,7 @@ def simulate(start, t_end, symmetry, dt=0.5e-10):
     if symmetry == 'spherical':
         f = f_sp_wrapper
     elif symmetry == 'cylindrical':
-        f = f_cy_wapper
+        f = f_cy_wrapper
 
     while t_ < t_end:
         start_t = time.perf_counter()
@@ -135,8 +131,7 @@ def simulate(start, t_end, symmetry, dt=0.5e-10):
             print(t_)
             history.append(np.copy(u))
             t_hist.append(t_)
-
+    
     print('Done simulating in %.2f s' % elapsed)
-    print('Done simulating in %.2f s' % elapsed_core)
     return np.array(t_hist), np.array(history)
         

@@ -5,7 +5,7 @@ import analysis as a
 import simulate as s
 import plotting as p
 
-symmetry = 'spherical'
+symmetry = 'cylindrical'
 
 rho = np.ones_like(s.r)*0.164
 ru = np.zeros_like(s.r)
@@ -20,7 +20,7 @@ t_hist, history = s.simulate(start, 0.5e-6, symmetry)
 
 peak_indices = a.peak_indices(history)
 
-p.combined_video(t_hist, history, peak_indices, symmetry, save_as='spherical-less-damping.mp4')
+p.combined_video(t_hist, history, peak_indices, symmetry) #save_as='cylindrical-less-damping.mp4')
 
 
 

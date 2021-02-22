@@ -52,7 +52,7 @@ def combined_video(t_hist, st, peak_indices, symmetry, save_as=None):
         l1.set_data(r_mm, pressure[i]/1e5)
         vl.set_xdata([r_mm[peak_indices[i]], r_mm[peak_indices[i]]])
         t.set_text("Time: %.2f us" % (t_hist[i] * 1e6))
-        e_change = (1 - a.total_energy_sp(st[i], symmetry)/a.total_energy_sp(st[0], symmetry)) * 100
+        e_change = (1 - a.total_energy(st[i], symmetry)/a.total_energy(st[0], symmetry)) * 100
         e.set_text('Energy change: %.1f %%' % e_change)
     
     #total_frames = len(st)
